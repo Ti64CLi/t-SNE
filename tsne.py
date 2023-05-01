@@ -1,5 +1,6 @@
 import numpy as np
 from math import log, exp
+from random import random
 
 # compute L2 distance between two vectors
 def L2(x1, x2):
@@ -83,6 +84,37 @@ def d2p(D, perplexity, tol):
 	
 	return Pout
 
+v_val = 0
+return_v = False
+def gaussRandom():
+	global v_val, return_v
+	if return_v:
+		return_v = False
+		return v_val
+	
+	u = 2 * random() - 1
+	v = 2 * random() - 1
+	r = u * u + v * v
+	if r == 0 or r > 1:
+		return gaussRandom()
+	
+	c = (-2 * log(r) / r) ** 0.5
+	v_val = v * c
+	return_v = True
+	return u * c
+
+def randn(mu, std):
+	return mu + gaussRandom() * std
+
+def randn2d(n, d):
+	x = np.zeros((n, d))
+
+	for i in range(n):
+		for j in range(d):
+			x[i, j] = randn(0, 1e-4)
+	
+	return x
+
 # take a set of high-dimensional points and 
 # create matrix P from them using gaussian kernel
 def initDataRaw(X, perplexity):
@@ -97,3 +129,16 @@ def initDataDists(D, perplexity):
 	P = d2p(D, perplexity, 1e-4)
 	return P
 
+
+def initSolution(n, d):
+	global Y, gains, ystep, iteration
+
+	Y = randn2d(n, d)
+	gains = np.ones((n, d))
+	ystep = np.zeros((n, d))
+
+	iteration = 0
+
+	return (Y, gains, ystep, iteration)
+
+def costGrad(P, )
