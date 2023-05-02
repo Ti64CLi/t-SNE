@@ -142,7 +142,7 @@ class TSNE:
 			for j in range(i + 1, N):
 				dsum = 0
 				for d in range(dim):
-					dhere = Y[i][d] - Y[j][d]
+					dhere = Y[i, d] - Y[j, d]
 					dsum += dhere * dhere
 				
 				qu = 1 / (1 + dsum) # t-Student distribution
@@ -158,7 +158,7 @@ class TSNE:
 				cost += -P[i, j] * log(normedProb)
 				premult = 4 * (pmul * P[i, j] - normedProb) * Qu[i, j]
 				for d in range(dim):
-					grad[i, d] += premult * (Y[i][d] - Y[j][d])
+					grad[i, d] += premult * (Y[i, d] - Y[j, d])
 		
 		return (cost, grad)
 
@@ -203,28 +203,28 @@ class TSNE:
 		ymean = np.zeros(self.dim)
 		for i in range(N):
 			for d in range(self.dim):
-				gid = grad[i][d]
-				sid = self.ystep[i][d]
-				gainid = self.gains[i][d]
+				gid = grad[i, d]
+				sid = self.ystep[i, d]
+				gainid = self.gains[i, d]
 
 				newgain = gainid * 0.2
 				if self.sign(gid) == self.sign(sid):
 					newgain = gainid * 0.8
 				newgain = max(newgain, 0.01)
-				self.gains[i][d] = newgain
+				self.gains[i, d] = newgain
 
 				momval = 0.8
 				if self.iter < 250:
 					momval = 0.5
 				newsid = momval * sid - self.epsilon * newgain * grad[i][d]
-				self.ystep[i][d] = newsid
+				self.ystep[i, d] = newsid
 
-				self.Y[i][d] += newsid
-				ymean[d] += self.Y[i][d]
+				self.Y[i, d] += newsid
+				ymean[d] += self.Y[i, d]
 		
 		for i in range(N):
 			for d in range(self.dim):
-				self.Y[i][d] -= ymean[d] / N
+				self.Y[i, d] -= ymean[d] / N
 		
 		return cost
 
@@ -316,7 +316,7 @@ if __name__ == '__main__':
 
 	axData = fig.add_subplot(1, 2, 1, projection='3d')
 
-	D, C = tsne.threeClustersData(50, 3)
+	D, C = tsne.linkData(50)
 	axData.scatter(D[:, 0], D[:, 1], D[:, 2], c=C)
 
 	
