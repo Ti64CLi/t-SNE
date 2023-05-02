@@ -8,7 +8,7 @@ from random import random
 
 class TSNE:
 	def __init__(self, **args):
-		self.perplexity = args.get('perplexity', 10)
+		self.perplexity = args.get('perplexity', 2)
 		self.dim = args.get('dim', 2)
 		self.epsilon = args.get('epsilon', 5)
 		self.N = args.get('N', 100)
@@ -249,24 +249,17 @@ class TSNE:
 			points.append(p)
 		return np.array(points)
 
-def animate(tsne):
+def animate(tsne, fig):
 	# Construct the scatter which we will update during animation
 	# as the raindrops develop.
+	ax = fig.add_subplot(1, 2, 2)
+
 	Y = tsne.getSolution()
-	fig, ax = plt.subplots()
 	ax.set_ylim((-5, 5))
 	ax.set_xlim((-5, 5))
 	scat = ax.scatter(Y[:, 0], Y[:, 1])
 					#s=rain_drops['size'], lw=0.5, edgecolors=rain_drops['color'],
 					#facecolors='none')
-
-	def normalize(datas):
-		n_datas = []
-
-		for v in datas:
-			n_datas.append(v / np.linalg.norm(v))
-		
-		return np.array(n_datas)
 
 	def update(frame_number):
 		# Update the scatter collection, with the new colors, sizes and positions.
@@ -278,11 +271,19 @@ def animate(tsne):
 		return scat, 
 
 	# Construct the animation, using the update function as the animation director.
-	animation = FuncAnimation(fig, update, interval=10, save_count=20000, blit=False)
-	plt.show()
+	return FuncAnimation(fig, update, interval=10, save_count=20000, blit=False)
 
 if __name__ == '__main__':
 	tsne = TSNE()
+	fig = plt.figure()
 
-	tsne.initDataRaw(tsne.linkData(50))
-	animate(tsne)
+	axData = fig.add_subplot(1, 2, 1, projection='3d')
+
+	D = tsne.linkData(50)
+	axData.scatter(D[:, 0], D[:, 1], D[:, 2])
+
+	
+	tsne.initDataRaw(D)
+	anim = animate(tsne, fig)
+
+	plt.show()
