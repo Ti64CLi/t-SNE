@@ -8,9 +8,9 @@ from random import random
 
 class TSNE:
 	def __init__(self, **args):
-		self.perplexity = args.get('perplexity', 30)
+		self.perplexity = args.get('perplexity', 15)
 		self.dim = args.get('dim', 2)
-		self.epsilon = args.get('epsilon', 5)
+		self.epsilon = args.get('epsilon', 15)
 		self.N = args.get('N', 100)
 		#self.rng = args.get('rng')
 		self.iter = 0
@@ -132,9 +132,7 @@ class TSNE:
 		dim = self.dim
 		P = self.P
 
-		pmul = 1
-		if self.iter < 100:
-			pmul = 4
+		pmul = 4 if self.iter < 100 else 1
 
 		Qu = np.zeros((N, N))
 		qsum = 0
@@ -151,16 +149,18 @@ class TSNE:
 				qsum += 2 * qu
 		
 		cost = 0
-		grad = np.zeros((N, dim))
+		grad = []
 		for i in range(N):
+			gsum = np.zeros(dim)
 			for j in range(N):
 				normedProb = max(Qu[i, j] / qsum, 1e-100)
 				cost += -P[i, j] * log(normedProb)
 				premult = 4 * (pmul * P[i, j] - normedProb) * Qu[i, j]
 				for d in range(dim):
-					grad[i, d] += premult * (Y[i, d] - Y[j, d])
+					gsum[d] += premult * (Y[i][d] - Y[j][d])
+			grad.append(gsum)
 		
-		return (cost, grad)
+		return (cost, np.array(grad))
 
 	# take a set of high-dimensional points and 
 	# create matrix P from them using gaussian kernel
@@ -207,15 +207,11 @@ class TSNE:
 				sid = self.ystep[i, d]
 				gainid = self.gains[i, d]
 
-				newgain = gainid * 0.2
-				if self.sign(gid) == self.sign(sid):
-					newgain = gainid * 0.8
+				newgain = (gainid * 0.8) if self.sign(gid) == self.sign(sid) else (gainid + 0.2)
 				newgain = max(newgain, 0.01)
 				self.gains[i, d] = newgain
 
-				momval = 0.8
-				if self.iter < 250:
-					momval = 0.5
+				momval = 0.5 if self.iter < 250 else 0.8
 				newsid = momval * sid - self.epsilon * newgain * grad[i][d]
 				self.ystep[i, d] = newsid
 
@@ -229,6 +225,29 @@ class TSNE:
 		return cost
 
 	## Dataset examples
+	@staticmethod
+	def unlinkData(n):
+		points = []
+		colors = []
+		def rotate(x, y, z):
+			u = x
+			cos4 = cos(.4)
+			sin4 = sin(.4)
+			v = cos4 * y + sin4 * z
+			w = -sin4 * y + cos4 * z
+			return [u, v, w]
+		
+		for i in range(n):
+			t = 2 * np.pi * i / n
+			sint = sin(t)
+			cost = cos(t)
+			points.append(rotate(cost, sint, 0))
+			colors.append("dodgerblue")
+			points.append(rotate(3 + cost, 0, sint))
+			colors.append("red")
+		
+		return np.array(points), np.array(colors)
+
 	@staticmethod
 	def linkData(n):
 		colors = []
@@ -249,7 +268,7 @@ class TSNE:
 			points.append(rotate(cost, sint, 0))
 			colors.append("dodgerblue")
 			points.append(rotate(1 + cost, 0, sint))
-			colors.append("magenta")
+			colors.append("red")
 		
 		return np.array(points), np.array(colors)
 
@@ -317,7 +336,7 @@ if __name__ == '__main__':
 
 	axData = fig.add_subplot(1, 2, 1, projection='3d')
 
-	D, C = tsne.linkData(50)
+	D, C = tsne.unlinkData(25)
 	axData.scatter(D[:, 0], D[:, 1], D[:, 2], c=C)
 
 	
