@@ -302,6 +302,7 @@ def animate(tsne, fig, C):
 		Y = tsne.getSolution()
 		ax.set_ylim(Y_to_shape(Y[:, 1]))
 		ax.set_xlim(Y_to_shape(Y[:, 0]))
+		ax.yaxis.set_ticks_position('right')
 		scat.set_offsets(Y)
 		ax.set_title(f'Iteration n°{tsne.iter}')
 		return scat, 
