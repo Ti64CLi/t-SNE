@@ -244,13 +244,15 @@ class TSNE:
 
 	@staticmethod
 	def cubeData(n, dim):
+		colors = []
 		points = []
 		for i in range(n):
 			p = []
 			for j in range(dim):
 				p.append(random())
 			points.append(p)
-		return np.array(points)
+			colors.append("dodgerblue")
+		return np.array(points), np.array(colors)
 
 def animate(tsne, fig, C):
 	# Construct the scatter which we will update during animation
