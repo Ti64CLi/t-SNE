@@ -11,7 +11,7 @@ class TSNE:
 		self.perplexity = args.get('perplexity', 10)
 		self.dim = args.get('dim', 2)
 		self.epsilon = args.get('epsilon', 5)
-		self.N = args.get('N', 50)
+		self.N = args.get('N', 100)
 		#self.rng = args.get('rng')
 		self.iter = 0
 		self._v_val = 0
@@ -218,7 +218,8 @@ class TSNE:
 		return cost
 
 	## Dataset examples
-	def linkData(self, n):
+	@staticmethod
+	def linkData(n):
 		points = []
 		def rotate(x, y, z):
 			u = x
@@ -238,7 +239,8 @@ class TSNE:
 		
 		return np.array(points)
 
-	def cubeData(self, n, dim):
+	@staticmethod
+	def cubeData(n, dim):
 		points = []
 		for i in range(n):
 			p = []
@@ -281,10 +283,6 @@ def animate(tsne):
 
 if __name__ == '__main__':
 	tsne = TSNE()
-	tsne.initSolution()
-	Y = tsne.getSolution()
-	plt.scatter(Y[:, 0], Y[:, 1])
-	plt.show()
 
-	#tsne.initDataRaw(tsne.linkData(50))
-	#animate(tsne)
+	tsne.initDataRaw(tsne.linkData(50))
+	animate(tsne)
