@@ -27,7 +27,7 @@ class TSNE:
 		dist = np.zeros((n, n))
 
 		for i in range(n):
-			for j in range(n):
+			for j in range(i + 1, n):
 				d = self.L2(X[i], X[j])
 				dist[i, j] = d
 				dist[j, i] = d
@@ -110,7 +110,7 @@ class TSNE:
 		if r == 0 or r > 1:
 			return self.gaussRandom()
 		
-		c = (-2 * log(r) / r) ** 0.5
+		c = int((-2 * log(r) / r) ** 0.5)
 		self._v_val = v * c
 		self._return_v = True
 		return u * c
@@ -132,36 +132,35 @@ class TSNE:
 		dim = self.dim
 		P = self.P
 
-		pmul = 4 if self.iter < 100 else 1
+		pmul = 1
+		if self.iter < 100:
+			pmul = 4
 
 		Qu = np.zeros((N, N))
 		qsum = 0
 		for i in range(N):
-			for j in range(i+1, N):
+			for j in range(i + 1, N):
 				dsum = 0
 				for d in range(dim):
 					dhere = Y[i][d] - Y[j][d]
 					dsum += dhere * dhere
 				
-				qu = 1 / (1 + dsum)
+				qu = 1 / (1 + dsum) # t-Student distribution
 				Qu[i, j] = qu
 				Qu[j, i] = qu
 				qsum += 2 * qu
 		
 		cost = 0
-		grad = []
+		grad = np.zeros((N, dim))
 		for i in range(N):
-			gsum = np.zeros(dim)
 			for j in range(N):
 				normedProb = max(Qu[i, j] / qsum, 1e-100)
 				cost += -P[i, j] * log(normedProb)
 				premult = 4 * (pmul * P[i, j] - normedProb) * Qu[i, j]
 				for d in range(dim):
-					gsum[d] += premult * (Y[i][d] - Y[j][d])
-			
-			grad.append(gsum)
+					grad[i, d] += premult * (Y[i][d] - Y[j][d])
 		
-		return (cost, np.array(grad))
+		return (cost, grad)
 
 	# take a set of high-dimensional points and 
 	# create matrix P from them using gaussian kernel
@@ -186,6 +185,14 @@ class TSNE:
 	
 	def getSolution(self):
 		return self.Y
+	
+	@staticmethod
+	def sign(n):
+		if n > 0:
+			return 1
+		if n < 0:
+			return -1
+		return 0
 
 	def step(self):
 		self.iter += 1
@@ -200,11 +207,15 @@ class TSNE:
 				sid = self.ystep[i][d]
 				gainid = self.gains[i][d]
 
-				newgain = (gainid * 0.8) if gid * sid > 0 else (gainid + 0.2)
+				newgain = gainid * 0.2
+				if sign(gid) == sign(sid):
+					newgain = gainid * 0.8
 				newgain = max(newgain, 0.01)
 				self.gains[i][d] = newgain
 
-				momval = 0.5 if self.iter < 250 else 0.8
+				momval = 0.8
+				if self.iter < 250:
+					momval = 0.5
 				newsid = momval * sid - self.epsilon * newgain * grad[i][d]
 				self.ystep[i][d] = newsid
 
