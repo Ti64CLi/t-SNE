@@ -208,7 +208,7 @@ class TSNE:
 				gainid = self.gains[i][d]
 
 				newgain = gainid * 0.2
-				if sign(gid) == sign(sid):
+				if self.sign(gid) == self.sign(sid):
 					newgain = gainid * 0.8
 				newgain = max(newgain, 0.01)
 				self.gains[i][d] = newgain
@@ -283,8 +283,8 @@ def animate(tsne, fig, C):
 	ax = fig.add_subplot(1, 2, 2)
 
 	Y = tsne.getSolution()
-	ax.set_ylim((-5, 5))
-	ax.set_xlim((-5, 5))
+	ax.set_ylim((-1, 1))
+	ax.set_xlim((-1, 1))
 	scat = ax.scatter(Y[:, 0], Y[:, 1], c=C)
 					#s=rain_drops['size'], lw=0.5, edgecolors=rain_drops['color'],
 					#facecolors='none')
@@ -295,6 +295,8 @@ def animate(tsne, fig, C):
 		#scat.set_sizes(rain_drops['size'])
 		tsne.step()
 		Y = tsne.getSolution()
+		ax.set_ylim((np.min(Y[:, 1]) * 0.9, np.max(Y[:, 1]) * 1.1))
+		ax.set_xlim((np.min(Y[:, 0]) * 0.9, np.max(Y[:, 0]) * 1.1))
 		scat.set_offsets(Y)
 		ax.set_title(f'Iteration n°{tsne.iter}')
 		return scat, 
