@@ -238,7 +238,7 @@ class TSNE:
 			points.append(rotate(cost, sint, 0))
 			colors.append("dodgerblue")
 			points.append(rotate(1 + cost, 0, sint))
-			colors.append("gold")
+			colors.append("magenta")
 		
 		return np.array(points), np.array(colors)
 
@@ -256,7 +256,7 @@ class TSNE:
 
 	@staticmethod
 	def threeClustersData(n, dim=50):
-		colors = [ ["gold", "dodgerblue", "red"][i%3] for i in range(3 * n)]
+		colors = [ ["magenta", "dodgerblue", "red"][i%3] for i in range(3 * n)]
 		points = np.zeros((3 * n, dim))
 		for i in range(n):
 			for j in range(dim):
