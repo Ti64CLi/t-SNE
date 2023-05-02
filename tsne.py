@@ -277,6 +277,11 @@ class TSNE:
 				
 		return np.array(points), np.array(colors)
 
+def Y_to_shape(Y):
+	Ymin, Ymax = np.min(Y), np.max(Y)
+	diff = Ymax - Ymin
+	return (Ymin - diff * 0.1, Ymax + diff * 0.1)
+
 def animate(tsne, fig, C):
 	# Construct the scatter which we will update during animation
 	# as the raindrops develop.
@@ -295,8 +300,8 @@ def animate(tsne, fig, C):
 		#scat.set_sizes(rain_drops['size'])
 		tsne.step()
 		Y = tsne.getSolution()
-		ax.set_ylim((np.min(Y[:, 1]) * 0.9, np.max(Y[:, 1]) * 1.1))
-		ax.set_xlim((np.min(Y[:, 0]) * 0.9, np.max(Y[:, 0]) * 1.1))
+		ax.set_ylim(Y_to_shape(Y[:, 1]))
+		ax.set_xlim(Y_to_shape(Y[:, 0]))
 		scat.set_offsets(Y)
 		ax.set_title(f'Iteration n°{tsne.iter}')
 		return scat, 
