@@ -220,6 +220,7 @@ class TSNE:
 	## Dataset examples
 	@staticmethod
 	def linkData(n):
+		colors = []
 		points = []
 		def rotate(x, y, z):
 			u = x
@@ -235,9 +236,11 @@ class TSNE:
 			cost = cos(t)
 
 			points.append(rotate(cost, sint, 0))
+			colors.append("dodgerblue")
 			points.append(rotate(1 + cost, 0, sint))
+			colors.append("gold")
 		
-		return np.array(points)
+		return np.array(points), np.array(colors)
 
 	@staticmethod
 	def cubeData(n, dim):
@@ -249,7 +252,7 @@ class TSNE:
 			points.append(p)
 		return np.array(points)
 
-def animate(tsne, fig):
+def animate(tsne, fig, C):
 	# Construct the scatter which we will update during animation
 	# as the raindrops develop.
 	ax = fig.add_subplot(1, 2, 2)
@@ -257,7 +260,7 @@ def animate(tsne, fig):
 	Y = tsne.getSolution()
 	ax.set_ylim((-5, 5))
 	ax.set_xlim((-5, 5))
-	scat = ax.scatter(Y[:, 0], Y[:, 1])
+	scat = ax.scatter(Y[:, 0], Y[:, 1], c=C)
 					#s=rain_drops['size'], lw=0.5, edgecolors=rain_drops['color'],
 					#facecolors='none')
 
@@ -279,11 +282,11 @@ if __name__ == '__main__':
 
 	axData = fig.add_subplot(1, 2, 1, projection='3d')
 
-	D = tsne.linkData(50)
-	axData.scatter(D[:, 0], D[:, 1], D[:, 2])
+	D, C = tsne.linkData(50)
+	axData.scatter(D[:, 0], D[:, 1], D[:, 2], c=C)
 
 	
 	tsne.initDataRaw(D)
-	anim = animate(tsne, fig)
+	anim = animate(tsne, fig, C)
 
 	plt.show()
