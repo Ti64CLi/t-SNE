@@ -256,16 +256,14 @@ class TSNE:
 
 	@staticmethod
 	def threeClustersData(n, dim=50):
-		colors = []
+		colors = [ ["gold", "dodgerblue", "red"][i%3] for i in range(3 * n)]
 		points = np.zeros((3 * n, dim))
 		for i in range(n):
 			for j in range(dim):
 				points[3 * i, j] = np.random.normal()
-				colors.append("dodgerblue")
 				points[3 * i + 1, j] = np.random.normal() + (10 if j == 0 else 0)
-				colors.append("gold")
 				points[3 * i + 2, j] = np.random.normal() + (50 if j == 0 else 0)
-				colors.append("red")
+				
 		return np.array(points), np.array(colors)
 
 def animate(tsne, fig, C):
@@ -300,7 +298,7 @@ if __name__ == '__main__':
 
 	axData = fig.add_subplot(1, 2, 1, projection='3d')
 
-	D, C = tsne.linkData(50)
+	D, C = tsne.threeClustersData(50, 3)
 	axData.scatter(D[:, 0], D[:, 1], D[:, 2], c=C)
 
 	
