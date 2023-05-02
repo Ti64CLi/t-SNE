@@ -254,14 +254,19 @@ class TSNE:
 			colors.append("dodgerblue")
 		return np.array(points), np.array(colors)
 
-	def threeClustersData(self, n, dim=50):
+	@staticmethod
+	def threeClustersData(n, dim=50):
+		colors = []
 		points = np.zeros((3 * n, dim))
 		for i in range(n):
 			for j in range(dim):
 				points[3 * i, j] = np.random.normal()
+				colors.append("dodgerblue")
 				points[3 * i + 1, j] = np.random.normal() + (10 if j == 0 else 0)
+				colors.append("gold")
 				points[3 * i + 2, j] = np.random.normal() + (50 if j == 0 else 0)
-		return points
+				colors.append("red")
+		return np.array(points), np.array(colors)
 
 def animate(tsne, fig, C):
 	# Construct the scatter which we will update during animation
