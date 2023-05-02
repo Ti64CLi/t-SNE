@@ -8,7 +8,7 @@ from random import random
 
 class TSNE:
 	def __init__(self, **args):
-		self.perplexity = args.get('perplexity', 2)
+		self.perplexity = args.get('perplexity', 30)
 		self.dim = args.get('dim', 2)
 		self.epsilon = args.get('epsilon', 5)
 		self.N = args.get('N', 100)
@@ -254,6 +254,15 @@ class TSNE:
 			colors.append("dodgerblue")
 		return np.array(points), np.array(colors)
 
+	def threeClustersData(self, n, dim=50):
+		points = np.zeros((3 * n, dim))
+		for i in range(n):
+			for j in range(dim):
+				points[3 * i, j] = np.random.normal()
+				points[3 * i + 1, j] = np.random.normal() + (10 if j == 0 else 0)
+				points[3 * i + 2, j] = np.random.normal() + (50 if j == 0 else 0)
+		return points
+
 def animate(tsne, fig, C):
 	# Construct the scatter which we will update during animation
 	# as the raindrops develop.
@@ -273,10 +282,12 @@ def animate(tsne, fig, C):
 		tsne.step()
 		Y = tsne.getSolution()
 		scat.set_offsets(Y)
+		ax.set_title(f'Iteration n°{tsne.iter}')
 		return scat, 
 
 	# Construct the animation, using the update function as the animation director.
-	return FuncAnimation(fig, update, interval=10, save_count=20000, blit=False)
+	animation = FuncAnimation(fig, update, interval=1, frames=500)
+	plt.show()
 
 if __name__ == '__main__':
 	tsne = TSNE()
