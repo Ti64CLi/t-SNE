@@ -302,20 +302,15 @@ def Y_to_shape(Y):
 
 def animate(tsne, fig, C):
 	# Construct the scatter which we will update during animation
-	# as the raindrops develop.
 	ax = fig.add_subplot(1, 2, 2)
 
 	Y = tsne.getSolution()
 	ax.set_ylim((-1, 1))
 	ax.set_xlim((-1, 1))
 	scat = ax.scatter(Y[:, 0], Y[:, 1], c=C)
-					#s=rain_drops['size'], lw=0.5, edgecolors=rain_drops['color'],
-					#facecolors='none')
 
 	def update(frame_number):
-		# Update the scatter collection, with the new colors, sizes and positions.
-		#scat.set_edgecolors(rain_drops['color'])
-		#scat.set_sizes(rain_drops['size'])
+		# Update the scatter collection, with the new positions.
 		tsne.step()
 		Y = tsne.getSolution()
 		ax.set_ylim(Y_to_shape(Y))
