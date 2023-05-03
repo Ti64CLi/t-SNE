@@ -21,11 +21,11 @@ class TSNE:
 	def L2(self, x1, x2):
 		return np.linalg.norm(x1 - x2)
 
-		# compute pairwise distance in all vectors in X
+	# compute pairwise distance in all vectors in X
 	def xtod(self, X):
-		n, _ = X.shape
+		n, m = X.shape
+		assert m == 1
 		dist = np.zeros((n, n))
-
 		for i in range(n):
 			for j in range(i + 1, n):
 				d = self.L2(X[i], X[j])
@@ -171,9 +171,8 @@ class TSNE:
 	# take a fattened distance matrix and create matrix P from them
 	# D is assumed to be squared
 	def initDataDists(self, D):
-		row, _ = D.shape
+		self.N, _ = D.shape
 		self.P = self.d2p(D, self.perplexity, 1e-4)
-		self.N = row
 		self.initSolution()
 
 
