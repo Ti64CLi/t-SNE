@@ -2,6 +2,7 @@ from tsne import *
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from mpl_toolkits.mplot3d import Axes3D
 
 def generate_linked_rings(n_per_ring=300, radius=1.0, noise=0.01):
     """
