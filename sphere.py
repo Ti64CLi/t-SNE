@@ -44,7 +44,7 @@ if __name__ == "__main__":
     ax2.set_title('t-SNE Optimization')
     ax2.grid(True, alpha=0.3)
 
-    def update(frame):
+    def update(_):
         for _ in range(steps_per_frame):
             tsne.step()
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         ax2.set_xlim(xmin - 0.1 * x_range, xmax + 0.1 * x_range)
         ax2.set_ylim(ymin - 0.1 * y_range, ymax + 0.1 * y_range)
 
-        phase = "Early Exaggeration" if tsne.current_step <= 100 else "Fine Tuning"
+        phase = "Early Exaggeration" if tsne.current_step <= 50 else "Fine Tuning"
         ax2.set_title(f"Step {tsne.current_step} | Phase: {phase}")
 
         return scatter,
