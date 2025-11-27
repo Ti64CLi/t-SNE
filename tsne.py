@@ -1,7 +1,7 @@
 import numpy as np
 
 class TSNE:
-    def __init__(self, perplexity, eta, tol: float=1e-2, seed: int | None=None) -> None:
+    def __init__(self, perplexity, eta, tol: float=1e-4, seed: int | None=None) -> None:
         self.perplexity = perplexity
         self.eta = eta
         self.tol= tol
@@ -11,20 +11,23 @@ class TSNE:
         """
         Compute the squared pairwise L2 distance
         """
-        sum_X = np.sum(np.square(X), 1)
-        D = np.add(np.add(-2 * np.dot(X, X.T), sum_X).T, sum_X)
-        np.fill_diagonal(D, 0)
+        # D(X_i, X_j) = sum_k ((X_i_k - X_j_k) ** 2) = sum_k ((X_i_k ** 2) + (X_j_k ** 2) - 2 * X_i_k * X_j_k)
+        # = sum_k (X_i_k ** 2) + sum_k (X_j_k ** 2) - 2 * sum_k (X_i_k * X_j_k)
+        # = sum_k (X_i_k ** 2) + sum_k (X_j_k ** 2) - 2 * X_i dot X_j
+        # X @ X_T contains every pairwise dot product
+        # and then numpy broadcasting does its magic (and transpose for both X_i and X_j)
+        sum_X2 = np.sum(X ** 2, 1)
 
-        return np.maximum(D, 0)
+        return sum_X2 + (sum_X2 - 2 * (X @ X.T)).T
+
 
     def compute_p(self, X: np.ndarray) -> None:
         """
         Compute the symmetrized P
         """
-        H_target = np.log(self.perplexity)
+        target_H = np.log(self.perplexity)
         D = self.compute_d(X)
         self.P = np.zeros((self.n, self.n))
-        P_i = np.zeros(self.n)
 
         max_tries = 50 # for the binary search for sigma
         log_lim = 1e-4
@@ -34,23 +37,22 @@ class TSNE:
             sigma2_max = np.inf
             sigma2 = 1.0
 
-            for step in range(max_tries):
+            for _ in range(max_tries):
                 d_i = D[i, :]
-                P_i = np.exp(-d_i / sigma2)
-                P_i[i] = 0
+                self.P[i] = np.exp(-d_i / sigma2)
+                self.P[i, i] = 0
 
                 # normalize P and compute entropy
-                sum_P_i = np.sum(P_i)
+                sum_P_i = np.sum(self.P[i])
                 if sum_P_i == 0: sum_P_i = 1e-10
-                P_i /= np.sum(P_i)
+                self.P[i] /= sum_P_i
 
-                P_i_n0 = P_i[P_i > log_lim]
-                H_current = -np.sum(P_i_n0 * np.log(P_i_n0))
+                P_i_n0 = self.P[i][self.P[i] > log_lim]
+                current_H = -np.sum(P_i_n0 * np.log(P_i_n0))
 
-                H_diff = H_current - H_target
+                H_diff = current_H - target_H
 
                 if np.abs(H_diff) < self.tol:
-                    # print(f"Break (step = {step})")
                     break
 
                 if H_diff > 0:
@@ -70,9 +72,6 @@ class TSNE:
                     else:
                         sigma2 = (sigma2 + sigma2_max) / 2
 
-            # copy over final values
-            self.P[i, :] = P_i[:]
-
         # symmetrize P
         self.P = (self.P + self.P.T) / (2 * self.n)
         self.P = np.maximum(self.P, 1e-10)
@@ -83,15 +82,16 @@ class TSNE:
         """
         self.Y = self.rng.normal(0, 1e-4, (self.n, 2))
 
-    def compute_q(self) -> tuple[np.ndarray, np.ndarray]:
+    def compute_q(self) -> np.ndarray:
         """
         Compute Q_ij for low-dimensional points
+        Be careful Q is not normalized to be used faster in gradient computation
         """
         D_Y = self.compute_d(self.Y)
         inv_D = 1.0 / (1.0 + D_Y)
         np.fill_diagonal(inv_D, 0)
 
-        return inv_D / np.sum(inv_D), inv_D
+        return inv_D
 
 
     def compute_grad(self) -> None:
@@ -101,13 +101,14 @@ class TSNE:
         # grad = 4 * sum((p_ij - q_ij) * (y_i - y_j) * inv_D_ij)
         # grad_i = 4 * sum_j (scalar_ij * (y_i - y_j))
         #        = 4 * (y_i * sum_j scalar_ij - sum_j (scalar_ij * y_j))
-        Q, inv_D = self.compute_q()
+        Q_nn = self.compute_q() # not normalized
 
+        # Early Exaggeration
         coeff = 1
-        if self.current_step <= 100:
+        if self.current_step <= 50:
             coeff = 4
 
-        PQ_diff = (coeff * self.P - Q) * inv_D
+        PQ_diff = (coeff * self.P - Q_nn / np.sum(Q_nn)) * Q_nn
         sum_PQ = np.sum(PQ_diff, axis=1).reshape(-1, 1)
 
         self.grad = 4 * (sum_PQ * self.Y - np.dot(PQ_diff, self.Y))
@@ -118,8 +119,9 @@ class TSNE:
         """
         self.current_step += 1
 
+        # Adaptative momentum
         momentum = 0.5
-        if self.current_step > 100:
+        if self.current_step >= 250:
             momentum = 0.8
 
         self.compute_grad()
@@ -154,6 +156,7 @@ class TSNE:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
+    from mpl_toolkits.mplot3d import Axes3D
 
     tsne = TSNE(perplexity=10, eta=50)
     steps = 200
@@ -184,7 +187,7 @@ if __name__ == "__main__":
     # ax2.set_aspect('equal', adjustable='box')
 
     skip = 1
-    def update(frame):
+    def update(_):
         for _ in range(skip):
             tsne.step()
 
